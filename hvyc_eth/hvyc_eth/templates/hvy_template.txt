@@ -4,11 +4,11 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts@4.7.2/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts@4.7.2/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts@4.7.2/token/ERC721/extensions/ERC721URIStorage.sol";
-{{ data.burnable_import }}
+{% if data.burnable %}{{ data.burnable_import }}{% endif %}
 import "@openzeppelin/contracts@4.7.2/access/Ownable.sol";
 import "@openzeppelin/contracts@4.7.2/utils/Counters.sol";
 
-contract HVYCharacter is ERC721, ERC721Enumerable, ERC721URIStorage,{{ data.burnable_tag }}Ownable {
+contract HVY{{ data.model }} is ERC721, ERC721Enumerable, ERC721URIStorage,{% if data.burnable %}{{ data.burnable_tag }}{% endif %}Ownable {
     using Counters for Counters.Counter;
 
     Counters.Counter private _tokenIdCounter;
@@ -26,7 +26,7 @@ contract HVYCharacter is ERC721, ERC721Enumerable, ERC721URIStorage,{{ data.burn
 
     Character[] public characters;
 
-    constructor() ERC721("HVYC_{{ data.name }}", "HVYC") {}
+    constructor() ERC721("HVY{{ data.abrev }}_{{ data.name }}", "HVY{{ data.abrev }}") {}
 
     function safeMint(address to, string memory uri, string memory name) public payable {
         require(totalSupply() < MAX_SUPPLY, "Sorry, Sold Out.");
@@ -110,7 +110,7 @@ contract HVYCharacter is ERC721, ERC721Enumerable, ERC721URIStorage,{{ data.burn
     }
 
     function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
-        super._burn(tokenId);
+        {% if data.burnable %}super._burn(tokenId);{% endif %}
     }
 
     function tokenURI(uint256 tokenId)
