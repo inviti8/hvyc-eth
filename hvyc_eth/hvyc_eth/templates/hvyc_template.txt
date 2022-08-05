@@ -1,0 +1,138 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.4;
+
+import "@openzeppelin/contracts@4.7.2/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts@4.7.2/token/ERC721/extensions/ERC721Enumerable.sol";
+import "@openzeppelin/contracts@4.7.2/token/ERC721/extensions/ERC721URIStorage.sol";
+{{ data.burnable_import }}
+import "@openzeppelin/contracts@4.7.2/access/Ownable.sol";
+import "@openzeppelin/contracts@4.7.2/utils/Counters.sol";
+
+contract HVYCharacter is ERC721, ERC721Enumerable, ERC721URIStorage,{{ data.burnable_tag }}Ownable {
+    using Counters for Counters.Counter;
+
+    Counters.Counter private _tokenIdCounter;
+    uint256 public mintRate = {{ data.price }} ether;
+    uint256 public premiumMintRate = {{ data.prem_price }} ether;
+    uint256 maxPropertyCnt = 100;
+    uint256 public MAX_SUPPLY = {{ data.max_supply }};
+
+    struct Character{
+        string name;
+        {% for prop in data.int_props -%}
+            uint256 {{ prop }}
+        {% endfor %}
+    }
+
+    Character[] public characters;
+
+    constructor() ERC721("HVYC_{{ data.name }}", "HVYC") {}
+
+    function safeMint(address to, string memory uri, string memory name) public payable {
+        require(totalSupply() < MAX_SUPPLY, "Sorry, Sold Out.");
+        require(msg.value >= mintRate, "Insufficient Ether Sent.");
+        uint256 tokenId = _tokenIdCounter.current();
+        uint256[] memory randArr = PsuedoRandomHashArray();
+        {% for prop in data.int_mint_props -%}
+            uint256 {{ prop }}
+        {% endfor %}
+
+        characters.push(
+            Character(
+                name,
+                {% for push in data.int_push -%}
+                    uint256 {{ push }}{{ "," if not loop.last }}
+                {% endfor %}
+            )
+        );
+
+        _tokenIdCounter.increment();
+        _safeMint(to, tokenId);
+        _setTokenURI(tokenId, uri);
+    }
+
+    function premiumMint(address to, string memory uri, string memory name, {{ data.int_params }}) public payable {
+        require(totalSupply() < MAX_SUPPLY, "Sorry, Sold Out.");
+        require(msg.value >= premiumMintRate, "Insufficient Ether Sent.");
+        uint256 tokenId = _tokenIdCounter.current();
+
+        characters.push(
+            Character(
+                name,
+                {% for push in data.int_push -%}
+                    uint256 {{ push }}{{ "," if not loop.last }}
+                {% endfor %}
+            )
+        );
+
+        _tokenIdCounter.increment();
+        _safeMint(to, tokenId);
+        _setTokenURI(tokenId, uri);
+    }
+
+    function getName(uint index) public view returns(string memory _name){
+        return characters[index].name;
+    }
+
+    {% for method_prop in data.int_method_props -%}
+        function get{{ method_prop }}(uint index) public view returns(uint256 _{{ method_prop }}){
+                return characters[index].{{ method_prop }}
+    }
+                {{''}}
+    {% endfor %}
+
+    function PsuedoRandomHashArray() public view returns(uint256[] memory){
+        // generate psuedo-randomHash
+        uint256 randomHash = uint256(keccak256(abi.encodePacked(block.timestamp, msg.sender)));
+        
+        // build an array of predefined length
+        uint256[] memory arr = new uint256[](32);
+        
+        // iterate over the number of stats we want a random number for
+        for(uint256 i; i < 32; i++){
+            // use random number to get number between 0 and maxPropertyCnt
+            arr[i] = randomHash % maxPropertyCnt;
+            
+            // byte shift randomHash to the right 8 bytes - can be fewer
+            randomHash >>= 4;
+        }
+        
+        return arr;
+    }
+
+    // The following functions are overrides required by Solidity.
+
+    function _beforeTokenTransfer(address from, address to, uint256 tokenId)
+        internal
+        override(ERC721, ERC721Enumerable)
+    {
+        super._beforeTokenTransfer(from, to, tokenId);
+    }
+
+    function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
+        super._burn(tokenId);
+    }
+
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        override(ERC721, ERC721URIStorage)
+        returns (string memory)
+    {
+        return super.tokenURI(tokenId);
+    }
+
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(ERC721, ERC721Enumerable)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
+    }
+
+    function withdraw() public onlyOwner {
+        require(address(this).balance > 0, "Nothing to withdraw.");
+        payable(owner()).transfer(address(this).balance);
+    }
+}
