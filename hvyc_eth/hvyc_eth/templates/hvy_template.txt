@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts@4.7.2/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts@4.7.2/token/ERC721/extensions/ERC721Enumerable.sol";
-import "@openzeppelin/contracts@4.7.2/token/ERC721/extensions/ERC721URIStorage.sol";
-{% if data.burnable %}{{ data.burnable_import }}{% endif %}
-import "@openzeppelin/contracts@4.7.2/access/Ownable.sol";
-import "@openzeppelin/contracts@4.7.2/utils/Counters.sol";
+import "./@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "./@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import "./@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+{% if data.burnable -%}{{ data.burnable_import }}{%- endif %}
+import "./@openzeppelin/contracts/access/Ownable.sol";
+import "./@openzeppelin/contracts/utils/Counters.sol";
 
-contract HVY{{ data.model }} is ERC721, ERC721Enumerable, ERC721URIStorage,{% if data.burnable %}{{ data.burnable_tag }}{% endif %}Ownable {
+contract HVY{{ data.model }} is ERC721, ERC721Enumerable, ERC721URIStorage,{% if data.burnable %}{{ data.burnable_tag }}{% endif %} Ownable {
     using Counters for Counters.Counter;
 
     Counters.Counter private _tokenIdCounter;
     uint256 public mintRate = {{ data.price }} ether;
-    uint256 public premiumMintRate = {{ data.prem_price }} ether;
+    uint256 public premiumMintRate = {{ data.price }} ether;
     uint256 maxPropertyCnt = 100;
     uint256 public MAX_SUPPLY = {{ data.max_supply }};
 
@@ -28,7 +28,7 @@ contract HVY{{ data.model }} is ERC721, ERC721Enumerable, ERC721URIStorage,{% if
 
     constructor() ERC721("HVY{{ data.abrev }}_{{ data.name }}", "HVY{{ data.abrev }}") {}
 
-    function safeMint(address to, string memory uri, string memory name) public payable {
+    function safeMint(address to, string memory uri, string memory name) public {{ data.payable }}  {
         require(totalSupply() < MAX_SUPPLY, "Sorry, Sold Out.");
         require(msg.value >= mintRate, "Insufficient Ether Sent.");
         uint256 tokenId = _tokenIdCounter.current();
@@ -41,7 +41,7 @@ contract HVY{{ data.model }} is ERC721, ERC721Enumerable, ERC721URIStorage,{% if
             Character(
                 name,
                 {% for push in data.int_push -%}
-                    uint256 {{ push }}{{ "," if not loop.last }}
+                    {{ push }}{{ "," if not loop.last }}
                 {% endfor %}
             )
         );
@@ -51,7 +51,7 @@ contract HVY{{ data.model }} is ERC721, ERC721Enumerable, ERC721URIStorage,{% if
         _setTokenURI(tokenId, uri);
     }
 
-    function premiumMint(address to, string memory uri, string memory name, {{ data.int_params }}) public payable {
+    function premiumMint(address to, string memory uri, string memory name, {{ data.int_params }}) public {{ data.payable }} {
         require(totalSupply() < MAX_SUPPLY, "Sorry, Sold Out.");
         require(msg.value >= premiumMintRate, "Insufficient Ether Sent.");
         uint256 tokenId = _tokenIdCounter.current();
@@ -60,7 +60,7 @@ contract HVY{{ data.model }} is ERC721, ERC721Enumerable, ERC721URIStorage,{% if
             Character(
                 name,
                 {% for push in data.int_push -%}
-                    uint256 {{ push }}{{ "," if not loop.last }}
+                    {{ push }}{{ "," if not loop.last }}
                 {% endfor %}
             )
         );
@@ -76,8 +76,8 @@ contract HVY{{ data.model }} is ERC721, ERC721Enumerable, ERC721URIStorage,{% if
 
     {% for method_prop in data.int_method_props -%}
         function get{{ method_prop }}(uint index) public view returns(uint256 _{{ method_prop }}){
-                return characters[index].{{ method_prop }}
-    }
+                return characters[index].{{ method_prop }};
+    {{'}'}}
                 {{''}}
     {% endfor %}
 
