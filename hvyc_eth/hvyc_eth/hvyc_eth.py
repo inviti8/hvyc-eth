@@ -227,7 +227,7 @@ def HVYCharacter_OnlyOwner(name, price, prem_price, max_supply, prop_arr, meta_a
     intParams = obj.intParams
     intPush = obj.intPush
         
-    data = hvym_data('Character', 'C', name, 'ownerOnly', True, BURNABLE_IMPORT, BURNABLE_TAG, price, prem_price, max_supply, intProps, intMintProps, intParams, intPush, prop_arr )
+    data = hvym_data('Character', 'C', name, 'onlyOwner', True, BURNABLE_IMPORT, BURNABLE_TAG, price, prem_price, max_supply, intProps, intMintProps, intParams, intPush, prop_arr )
     
     output = template.render(data=data)
     print(output)
@@ -312,4 +312,4 @@ props = ['intelligence', 'strength', 'hate', 'love', 'charm']
 
 SolInstall(sol_version)
 
-HVYCharacter_Payable('TEST', '0.2', '0.25', '10', props, None)
+HVYCharacter_OnlyOwner('TEST', '0.2', '0.25', '10', props, None)
